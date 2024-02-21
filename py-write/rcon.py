@@ -2,9 +2,6 @@ import asyncio
 import os
 import time
 import struct
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class RconClient:
     def __init__(self, host=os.getenv("HOST"), port=os.getenv("PORT"), password=os.getenv("PASSWORD")):
