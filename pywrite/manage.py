@@ -13,16 +13,19 @@ async def main():
         logger.info('Started')
 
     client = rcon.RconClient('localhost', 25575, "1234")
-    await client.__connect__()
+    await client.connect()
 
-    while True:
-        user_input = input("Send a command to the client, or type /q to quit: ")
-        if user_input == '/q':
-            break
-        else:
-            response = await client.send(user_input)
-            print(response)
+    try:
+        while True:
+            user_input = input("Send a command to the client, or type /q to quit: ")
+            if user_input == '/q':
+                await client._cleanup()
+                break
+            else:
+                response = await client.send(user_input)
+                print(response)
+    except asyncio.CancelledError:
+        logger.error("Main coroutine cancelled.")
 
-    logger.info('Finished')
-
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
