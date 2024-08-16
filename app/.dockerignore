@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+.git
+.gitignore
+Dockerfile
+.dockerignore
+
+.vscode
+*.sublime-project
+*.sublime-workspace
+
+node_modules
