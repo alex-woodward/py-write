@@ -5,7 +5,7 @@ from args import parse_args
 
 async def main():
     # Parse command-line arguments
-    args = parse_args()
+    parse_args()
 
     # Create and connect RCON client
     client = rcon.RconClient('localhost', 25575, "1234")
@@ -17,12 +17,12 @@ async def main():
             if user_input == '/q':
                 await client._cleanup()
                 break
-            else:
-                response = await client.send(user_input)
-                print(response)
+            response = await client.send(user_input)
+
     except asyncio.CancelledError:
         # Log cancellation or handle cleanup if necessary
         logging.error("Main coroutine was cancelled.")
+
     finally:
         await client._cleanup()
 
