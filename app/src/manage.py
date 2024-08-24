@@ -37,6 +37,7 @@ async def main():
                 await client.close()
                 break
             response = await client.send(user_input)
+            print(response)
 
     except asyncio.CancelledError:
         # Log cancellation or handle cleanup if necessary
@@ -46,11 +47,4 @@ async def main():
         await client.close()
 
 if __name__ == "__main__":
-    """
-    Entry point for the script.
-
-    This block ensures that the main coroutine is executed within an asyncio event loop.
-    It runs the main() function asynchronously and handles any initialization or 
-    finalization needed for the script.
-    """
     asyncio.run(main())
