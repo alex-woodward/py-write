@@ -1,17 +1,13 @@
+import asyncio
 import logging
 import rcon
-import asyncio
-import sys
-
+from args import parse_args
 
 async def main():
-    commands = sys.argv
-    if '-l' in commands:
-        logging.basicConfig(filename='pywrite.log', level=logging.DEBUG, 
-            format='%(asctime)s - %(levelname)s - %(message)s')
-        logger = logging.getLogger(__name__)
-        logger.info('Started')
+    # Parse command-line arguments
+    args = parse_args()
 
+    # Create and connect RCON client
     client = rcon.RconClient('localhost', 25575, "1234")
     await client.connect()
 
@@ -25,7 +21,10 @@ async def main():
                 response = await client.send(user_input)
                 print(response)
     except asyncio.CancelledError:
-        logger.error("Main coroutine cancelled.")
+        # Log cancellation or handle cleanup if necessary
+        logging.error("Main coroutine was cancelled.")
+    finally:
+        await client._cleanup()
 
 if __name__ == "__main__":
     asyncio.run(main())
