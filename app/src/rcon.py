@@ -31,7 +31,10 @@ class RconClient:
         _cmd_queue (asyncio.Queue): The queue for commands to be sent to the server.
         _process_task (asyncio.Task): The task responsible for processing commands.
     """
-    def __init__(self, host=os.getenv("HOST"), port=os.getenv("PORT"), password=os.getenv("PASSWORD")):
+    def __init__(self,
+                 host=os.getenv("HOST"),
+                 port=os.getenv("PORT"),
+                 password=os.getenv("PASSWORD")):
         """
         Initialize the RconClient with the server details and credentials.
 
@@ -60,9 +63,9 @@ class RconClient:
         self._active = True
         if not self._process_task:
             self._process_task = asyncio.create_task(self._process())
-            logger.info(f'Creating processing task: {self._process_task}.')
+            logger.info('Creating processing task: %s.', self._process_task)
 
-        logger.info(f'Initiating connection to {self.host}:{self.port}.')
+        logger.info('Initiating connection to %s:%d.', self.host, self.port)
         await self._reconnect()
 
     async def send(self, cmd):
@@ -79,10 +82,10 @@ class RconClient:
         """
         future = asyncio.Future()
         await self._cmd_queue.put((cmd, future))
-        logger.debug(f'Queueing command "{cmd}" to {self.host}:{self.port}.')
+        logger.debug('Queueing command "%s" to %s:%d.', cmd, self.host, self.port)
         return await future
 
-    async def cleanup(self, err_type=None, err_val=None):
+    async def close(self, err_type=None, err_val=None):
         """
         Public method to gracefully close the connection and clean up resources.
 
@@ -111,8 +114,8 @@ class RconClient:
                     break
             except (ConnectionError, OSError) as e:
                 if attempt == 5:
-                    self._cleanup(ConnectionError, "Unable to reconnect.")
-                logger.error(f'Connection error: {e}. Retrying in 5 seconds...')
+                    await self._cleanup(ConnectionError, "Unable to reconnect.")
+                logger.error('Connection error: %s. Retrying in 5 seconds...', e)
                 attempt += 1
             await asyncio.sleep(5)
 
@@ -124,7 +127,7 @@ class RconClient:
         Logs a message if the connection is successful.
         """
         if await self._send(self.password, 3):
-            logger.info(f'Successfully connected to {self.host}:{self.port}.')
+            logger.info('Successfully connected to %s:%d.', self.host, self.port)
 
     async def _read(self, len_b):
         """
@@ -157,18 +160,17 @@ class RconClient:
                 future.set_result(result)
                 self._cmd_queue.task_done()
 
-            # TODO: Graceful error handling.
             except asyncio.CancelledError:
                 pass
 
             except ValueError as e:
-                logger.error(f'RCON error: {e}')
+                logger.error('RCON error: %s', e)
 
             except (ConnectionError, OSError):
-                logger.error(f'Connection lost. Attempting to reconnect...')
+                logger.error('Connection lost. Attempting to reconnect...')
                 await self._reconnect()
 
-    async def _send(self, cmd: str, type=2):
+    async def _send(self, cmd: str, cmd_type=2):
         """
         Sends a command to the RCON server and waits for the response.
 
@@ -177,20 +179,20 @@ class RconClient:
 
         Args:
             cmd (str): The command string to send to the server.
-            type (int, optional): The type of RCON packet to send. Defaults to 2.
+            cmd_type (int, optional): The type of RCON packet to send. Defaults to 2.
 
         Returns:
             str: The decoded response data from the server.
         """
-        out_packet = struct.pack('<li', 0, type) + cmd.encode('utf8') + b'\x00\x00'
+        out_packet = struct.pack('<li', 0, cmd_type) + cmd.encode('utf8') + b'\x00\x00'
         out_len = struct.pack('<i', len(out_packet))
         self._writer.write(out_len + out_packet)
-        logger.debug(f'Command "{cmd}" sent to {self.host}.')
+        logger.debug('Command "%s" sent to %s:%d.', cmd, self.host, self.port)
 
         in_length = struct.unpack('<i', await self._read(4))
         in_packet = await self._read(in_length[0])
 
-        logger.debug(f'Received response: {in_packet}')
+        logger.debug('Received response: %s', in_packet)
         data = await self._verify(in_packet)
 
         return data.decode('utf8')
@@ -236,12 +238,10 @@ class RconClient:
         in_id, in_type = struct.unpack('<ii', in_pkt[:8])
         in_data, in_padd = in_pkt[8:-2], in_pkt[-2:]
 
-        #if in_id != out_id:
-        #    raise ValueError("Mismatched IDs")
         if in_id == -1:
             await self._cleanup(ValueError, "Incorrect password.")
 
         if in_padd != b'\x00\x00':
             await self._cleanup(ValueError, "Invalid padding.")
 
-        return in_data 
+        return in_data

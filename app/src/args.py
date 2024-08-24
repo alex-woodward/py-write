@@ -60,8 +60,8 @@ def configure_logging(args):
 
     # Set the logging level
     log_level = getattr(logging, args.verbosity.upper(), logging.INFO)
-    logging.basicConfig(level=log_level, 
-                        format='%(asctime)s - %(levelname)s - %(message)s', 
+    logging.basicConfig(level=log_level,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
                         handlers=handlers)
 
     logger = logging.getLogger(__name__)
